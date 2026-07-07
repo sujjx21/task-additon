@@ -344,7 +344,9 @@ export default function App() {
                     <span
                       onClick={() => toggleTodo(todo.id)}
                       className={`cursor-pointer text-sm block mt-0.5 ${
-                        todo.done ? "line-through text-slate-400" : "text-slate-700"
+                        todo.done
+                          ? "line-through decoration-2 text-slate-400"
+                          : "text-slate-700"
                       }`}
                     >
                       {todo.text}
