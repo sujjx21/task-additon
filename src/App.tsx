@@ -35,25 +35,32 @@ export default function App() {
     Low: "text-green-600 bg-green-50",
   };
 
-  const today = new Date(new Date().toDateString());
+  // Bug fix: compare dates as date strings only (no time zone issues)
+  const toDateOnly = (dateStr: string): Date => {
+    const [year, month, day] = dateStr.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   const isOverdue = (due: string, done: boolean): boolean => {
     if (!due || done) return false;
-    return new Date(due) < today;
+    return toDateOnly(due) < today;
   };
 
   const isUpcoming = (due: string, done: boolean): boolean => {
     if (!due || done) return false;
-    const dueD = new Date(due);
-    const diffDays = Math.ceil(
+    const dueD = toDateOnly(due);
+    const diffDays = Math.round(
       (dueD.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
     );
     return diffDays >= 0 && diffDays <= 3;
   };
 
   const getDaysLeft = (due: string): string => {
-    const dueD = new Date(due);
-    const diffDays = Math.ceil(
+    const dueD = toDateOnly(due);
+    const diffDays = Math.round(
       (dueD.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
     );
     if (diffDays === 0) return "Due Today!";
@@ -134,7 +141,12 @@ export default function App() {
   const upcomingCount = todos.filter((t) => isUpcoming(t.dueDate, t.done)).length;
   const overdueCount = todos.filter((t) => isOverdue(t.dueDate, t.done)).length;
 
-  const filterButtons: { label: string; value: Filter; count?: number; color: string }[] = [
+  const filterButtons: {
+    label: string;
+    value: Filter;
+    count?: number;
+    color: string;
+  }[] = [
     { label: "All", value: "All", count: todos.length, color: "bg-slate-100 text-slate-600" },
     { label: "Upcoming", value: "Upcoming", count: upcomingCount, color: "bg-blue-50 text-blue-600" },
     { label: "Completed", value: "Completed", count: completed, color: "bg-green-50 text-green-600" },
@@ -142,20 +154,22 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen w-full bg-red-400 flex items-center justify-center p-6">
-      <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-sm space-y-6">
-        <h1 className="text-2xl font-bold text-slate-800 text-center">
-          Task Addition
-        </h1>
-        <p className="text-slate-500 text-sm text-center">Typescript Project</p>
+    <div className="min-h-screen w-full bg-red-400 p-4 md:p-8">
+      <div className="bg-white shadow-lg rounded-2xl p-6 w-full min-h-screen md:min-h-0 space-y-6">
+
+        {/* Header */}
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-slate-800">Task Addition</h1>
+          <p className="text-slate-500 text-sm mt-1">Typescript Project</p>
+        </div>
 
         {/* Progress */}
         {todos.length > 0 && (
           <div className="text-center text-xs text-slate-500">
             {completed} of {todos.length} tasks completed
-            <div className="w-full bg-slate-200 rounded-full h-1.5 mt-1">
+            <div className="w-full bg-slate-200 rounded-full h-2 mt-1">
               <div
-                className="bg-cyan-600 h-1.5 rounded-full transition-all"
+                className="bg-cyan-600 h-2 rounded-full transition-all"
                 style={{ width: `${(completed / todos.length) * 100}%` }}
               />
             </div>
@@ -164,12 +178,12 @@ export default function App() {
 
         {/* Filter Tabs */}
         {todos.length > 0 && (
-          <div className="flex gap-1 flex-wrap justify-center">
+          <div className="flex gap-2 flex-wrap justify-center">
             {filterButtons.map((btn) => (
               <button
                 key={btn.value}
                 onClick={() => setFilter(btn.value)}
-                className={`px-2 py-1 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
                   filter === btn.value
                     ? btn.color + " ring-1 ring-current"
                     : "text-slate-400 bg-slate-50 hover:bg-slate-100"
@@ -186,7 +200,7 @@ export default function App() {
 
         {/* Upcoming Banner */}
         {upcomingCount > 0 && filter === "All" && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
             <p className="text-xs font-semibold text-blue-600">
               📅 {upcomingCount} task{upcomingCount > 1 ? "s" : ""} due in the next 3 days
             </p>
@@ -212,11 +226,11 @@ export default function App() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addTodo()}
               placeholder="Add a task..."
-              className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="flex-1 border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
             <button
               onClick={addTodo}
-              className="px-4 py-2 rounded-lg bg-cyan-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors"
+              className="px-5 py-2.5 rounded-lg bg-cyan-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors"
             >
               Add
             </button>
@@ -229,7 +243,7 @@ export default function App() {
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="flex-1 border border-slate-300 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
@@ -239,7 +253,7 @@ export default function App() {
               <button
                 key={p}
                 onClick={() => setPriority(p)}
-                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                   priority === p
                     ? priorityColor[p] + " border-current"
                     : "text-slate-400 border-slate-200 hover:border-slate-400"
@@ -252,9 +266,9 @@ export default function App() {
         </div>
 
         {/* Task List */}
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {filteredTodos.length === 0 && (
-            <p className="text-slate-400 text-sm text-center">
+            <p className="text-slate-400 text-sm text-center py-8">
               {filter === "All"
                 ? "No tasks yet. Add one above!"
                 : `No ${filter.toLowerCase()} tasks.`}
@@ -263,7 +277,7 @@ export default function App() {
           {filteredTodos.map((todo, index) => (
             <li
               key={todo.id}
-              className={`rounded-lg px-3 py-2 ${
+              className={`rounded-xl px-4 py-3 ${
                 isOverdue(todo.dueDate, todo.done)
                   ? "bg-red-50 border border-red-200"
                   : isUpcoming(todo.dueDate, todo.done)
@@ -279,7 +293,7 @@ export default function App() {
                     onChange={(e) => setEditText(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && saveEdit(todo.id)}
                     autoFocus
-                    className="w-full border border-slate-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                   <div className="flex items-center gap-2">
                     <label className="text-xs text-slate-500 shrink-0">Due:</label>
@@ -362,7 +376,7 @@ export default function App() {
                           }`}
                         >
                           Due:{" "}
-                          {new Date(todo.dueDate).toLocaleDateString("en-GB", {
+                          {toDateOnly(todo.dueDate).toLocaleDateString("en-GB", {
                             day: "2-digit",
                             month: "short",
                             year: "numeric",
